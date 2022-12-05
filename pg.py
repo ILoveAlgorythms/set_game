@@ -1,11 +1,8 @@
-class a:
-    id = 2
-    def __str__(self):
-        return str(self.id * 2)
+def x(a, b):
+    if a == 1:
+        return a*2, b
+    else:
+        return False
 
-    def __repr__(self):
-        return str(self.id)
-
-ds = a()
-ds.id = 4
-print([ds])
+if x(1, 2):
+    print("fgdsfa")

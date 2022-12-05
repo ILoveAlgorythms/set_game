@@ -4,7 +4,7 @@ import config
 import funcrions as f
 
 pygame.init()
-c = [
+colorlist = [
     (255, 0, 0),
     (0, 255, 0),
     (122, 0, 255),
@@ -19,7 +19,7 @@ game_goes = True
 clicked = list()
 waiting = -1
 
-# constans declaration
+# constants declaration
 sc = pygame.display.set_mode((config.W + config.CARD_W * 4 + config.NOTCH, config.H),
                              pygame.RESIZABLE)
 clock = pygame.time.Clock()
@@ -40,10 +40,9 @@ while game_goes:
     sc.blit(pygame.transform.scale(pygame.image.load("colorcircle.png"),
                                    (config.CARD_W * 5, config.CARD_W * 5)),
             (config.CARD_W * 3 + 3.5 * config.NOTCH, config.NOTCH))
-    # за один тик нужно: дополнить до 12 карт, убирать/прибавлять, пока нет сетов
     if len(cardlist) < 12:
-        f.cardto12(cardlist, c, unusing_cards)
-        f.makeset(cardlist, c, unusing_cards)  # check sets
+        f.cardto12(cardlist, colorlist, unusing_cards)
+        f.makeset(cardlist, colorlist, unusing_cards)  # check sets
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -54,7 +53,7 @@ while game_goes:
                 if i.rect.collidepoint(pos):
                     if i not in clicked:
                         clicked.append(i)
-                        i.click(c)
+                        i.click(colorlist)
                     else:
                         i.unclick(sc)
                         clicked.remove(i)
@@ -70,12 +69,12 @@ while game_goes:
                         newx = a.rect.x
                         newy = a.rect.y
                         a.kill()
-                        f.newcard(cardlist, c, newx, newy, unusing_cards)
+                        f.newcard(cardlist, colorlist, newx, newy, unusing_cards)
                     cardlist.draw(sc)
                     clicked.clear()
-                    f.cardto12(cardlist, c, unusing_cards)
+                    f.cardto12(cardlist, colorlist, unusing_cards)
                     for i in cardlist:
-                        i.click(c)
+                        i.click(colorlist)
                         i.unclick(sc)
                 else:
                     for i in clicked:
@@ -83,21 +82,20 @@ while game_goes:
                     waiting = config.NOT_A_SET_TICKS
                     f.notaset(sc, nsp, font)
                     clicked.clear()
-                    print("not a set!")
         elif event.type == pygame.KEYDOWN:
             if event.key == pygame.K_SPACE:
                 game_goes = False
             elif event.key in (pygame.K_q, pygame.K_w, pygame.K_e):
                 if not (sc.get_at(pygame.mouse.get_pos()) == sc.get_at((0, 0))):
                     if event.key == pygame.K_q:
-                        c[0] = sc.get_at(pygame.mouse.get_pos())
-                        cardlist.update(c[0], 0, c)
+                        colorlist[0] = sc.get_at(pygame.mouse.get_pos())
+                        cardlist.update(colorlist[0], 0, colorlist)
                     elif event.key == pygame.K_w:
-                        c[1] = sc.get_at(pygame.mouse.get_pos())
-                        cardlist.update(c[1], 1, c)
+                        colorlist[1] = sc.get_at(pygame.mouse.get_pos())
+                        cardlist.update(colorlist[1], 1, colorlist)
                     elif event.key == pygame.K_e:
-                        c[2] = sc.get_at(pygame.mouse.get_pos())
-                        cardlist.update(c[2], 2, c)
+                        colorlist[2] = sc.get_at(pygame.mouse.get_pos())
+                        cardlist.update(colorlist[2], 2, colorlist)
                     cardlist.draw(sc)
 
     if waiting > 0 and waiting != -1:

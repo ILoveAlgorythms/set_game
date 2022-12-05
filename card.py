@@ -6,7 +6,7 @@ class Card(pygame.sprite.Sprite):
     id = 0
 
     def __str__(self):
-        return str("id:" + str(self.id) + str(self.shape) + str(self.fill) + str(self.numbers + 1) + "COLOR:" + str(self.color))
+        return ' '.join(["id:", str(self.id), str(self.shape), str(self.fill), str(self.numbers + 1), "color:", str(self.color)])
 
     def __repr__(self):
         return str(self.id)
@@ -34,7 +34,6 @@ class Card(pygame.sprite.Sprite):
         image.blit(self.image, (0, 0, config.CARD_W, config.CARD_H))
         sc.blit(black, ((self.rect.x, self.rect.y + config.CARD_H)))
         self.image = image
-        print(self.image.get_height() - config.CARD_H)
 
     def update(self, newcolor, oldcolor, colorlist):
         if self.color == oldcolor:
@@ -84,22 +83,20 @@ class Card(pygame.sprite.Sprite):
         self.rect.x = coords[0]
         self.rect.y = coords[1]
 
-    def get_parametr(self, param):  #
-        if param == "n":
+    def get_parametr(self, parametr):
+        if parametr == "n":
             return self.numbers
-        elif param == "s":
+        elif parametr == "s":
             return self.shape
-        elif param == "f":
+        elif parametr == "f":
             return self.fill
-        elif param == "c":
+        elif parametr == "c":
             return self.color
 
     def checksettable(self, card2, crad3, param):
         return self.param == card2.param
 
     def checkset(card1, card2, card3, *args):
-        # print(card1.pr())
-
         dic = {"n": "numbers", "s": "shape", "f": "fill", "c": "color"}
         for i in dic.keys():
             if (card1.get_parametr(i) == card2.get_parametr(i) and card3.get_parametr(i) != card1.get_parametr(i)) or \
@@ -107,7 +104,6 @@ class Card(pygame.sprite.Sprite):
                     or (card3.get_parametr(i) == card1.get_parametr(i) and card2.get_parametr(i) != card3.get_parametr(i)):
                 if args != ():
                     print("\n   not a set because of :", dic[i])
-                    print("\n", card1, card2, card3, sep="\n")
-
+                    print(card1, card2, card3, '', sep="\n")
                 return False
         return True

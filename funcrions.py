@@ -3,13 +3,10 @@ import config
 import random
 from pygame import display
 
-# def fill_with_sets(sc, cardlist, colors, unusing_cards):
-#     while len(cardlist) < 12:
-#         Card(cardlist, random.choice(unusing_cards), colors)
-
 
 def showset(sc, cardlist):
     print(1)
+
 
 def draw_text(sc, pos, font, score):
     text = font.render('Your Score: ' + str(score), True, (255, 255, 255), (0, 0, 0))
@@ -30,50 +27,36 @@ def newcard(cardlist, c, x, y, unusing_cards):
     cardlist.add(newcard_)
 
 
-    #print(newcard.groups())
-
-
 
 def cardto12(cardlist, c, unusing_cards):
     a_ = list()
-    while len(cardlist) < 12 :
+    while len(cardlist) < config.CARDS_ON_BOARD:
         x = config.NOTCH + (len(cardlist) % 3) * config.CARD_W + (len(cardlist) % 3) * config.NOTCH#
         y = config.NOTCH + (len(cardlist) // 3) * config.CARD_H + (len(cardlist) // 3) * config.NOTCH
         a_.append(newcard(cardlist, c, x, y, unusing_cards))
 
 
-
-def makeset(cardlist, c, unusing_cards):
-    b = False
+def find_set(cardlist):
     for i in cardlist:
         for j in cardlist:
             if i.id != j.id:
                 for k in cardlist:
                     if i.id != k.id and j.id != k.id:
                         if Card.checkset(i, j, k):
-                            b = True
-                            print("there is s set: ", i, j, k, sep="\n")
-                            break
-                        #return b
+                            print("   There is a set: ", i, j, k, sep="\n")
+                            return i, j, k
+    return False
 
-    while not b:
+
+def makeset(cardlist, c, unusing_cards):
+    set_on_table = find_set(cardlist)
+    while not set_on_table:
         for i in range(3):
             a = random.choice((cardlist.sprites()))
-            print(a)
             newx = a.rect.x
             newy = a.rect.y
             unusing_cards.append(a.id)
             a.kill()
             newcard(cardlist, c, newx, newy, unusing_cards)
-        print(unusing_cards)
 
-        b = False
-        for i in cardlist:
-            for j in cardlist:
-                if i.id != j.id:
-                    for k in cardlist:
-                        if i.id != k.id and j.id != k.id:
-                            if Card.checkset(i, j, k):
-                                b = True
-                                print("  there is s set: ", i, j, k, sep="\n")
-                                break
+        set_on_table = find_set(cardlist)

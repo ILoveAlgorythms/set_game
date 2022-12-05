@@ -1,5 +1,5 @@
 from card import Card
-import config as g
+import config
 import random
 from pygame import display
 
@@ -7,6 +7,9 @@ from pygame import display
 #     while len(cardlist) < 12:
 #         Card(cardlist, random.choice(unusing_cards), colors)
 
+
+def showset(sc, cardlist):
+    print(1)
 
 def draw_text(sc, pos, font, score):
     text = font.render('Your Score: ' + str(score), True, (255, 255, 255), (0, 0, 0))
@@ -34,8 +37,8 @@ def newcard(cardlist, c, x, y, unusing_cards):
 def cardto12(cardlist, c, unusing_cards):
     a_ = list()
     while len(cardlist) < 12 :
-        x = g.NOTCH + (len(cardlist) % 3) * g.CARD_W + (len(cardlist) % 3) * g.NOTCH#
-        y = g.NOTCH + (len(cardlist) // 3) * g.CARD_H + (len(cardlist) // 3) * g.NOTCH
+        x = config.NOTCH + (len(cardlist) % 3) * config.CARD_W + (len(cardlist) % 3) * config.NOTCH#
+        y = config.NOTCH + (len(cardlist) // 3) * config.CARD_H + (len(cardlist) // 3) * config.NOTCH
         a_.append(newcard(cardlist, c, x, y, unusing_cards))
 
 
@@ -49,14 +52,14 @@ def makeset(cardlist, c, unusing_cards):
                     if i.id != k.id and j.id != k.id:
                         if Card.checkset(i, j, k):
                             b = True
-                            print("there is s set: ", i.pr(), j.pr(), k.pr(), sep="\n")
+                            print("there is s set: ", i, j, k, sep="\n")
                             break
                         #return b
 
     while not b:
         for i in range(3):
             a = random.choice((cardlist.sprites()))
-            print(a.pr())
+            print(a)
             newx = a.rect.x
             newy = a.rect.y
             unusing_cards.append(a.id)
@@ -72,5 +75,5 @@ def makeset(cardlist, c, unusing_cards):
                         if i.id != k.id and j.id != k.id:
                             if Card.checkset(i, j, k):
                                 b = True
-                                print("  there is s set: ", i.pr(), j.pr(), k.pr(), sep="\n")
+                                print("  there is s set: ", i, j, k, sep="\n")
                                 break

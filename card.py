@@ -37,15 +37,16 @@ class Card(pygame.sprite.Sprite):
 
     def update(self, newcolor, oldcolor, colorlist):
         if self.color == oldcolor:
-            image = pygame.transform.scale(pygame.image.load(
-                "cards/" + str(self.numbers) + self.shape[0] + self.fill[0] + ".bmp"),
-                (config.CARD_W, config.CARD_H))
-            image.set_colorkey((255, 255, 255))
-            self.image = pygame.Surface([config.CARD_W, self.image.get_height()])
-            self.image.fill(newcolor, image.get_rect())
-            self.image.blit(image, (0, 0))
+            self.makeimage(newcolor, config.CARD_W, config.CARD_H)
             if self.image.get_height() > config.CARD_H:
                 self.click(colorlist)
+
+    def makeimage(self, newcolor, width, height):
+        image = pygame.transform.scale(pygame.image.load(self.imagename), (width, height))
+        image.set_colorkey((255, 255, 255))
+        self.image = pygame.Surface([self.image.get_width(), self.image.get_height()])
+        self.image.fill(newcolor, image.get_rect())
+        self.image.blit(image, (0, 0))
 
     def upd(self, initid, colorlist, coords, unusing_cards):
         self.id = initid
@@ -60,7 +61,7 @@ class Card(pygame.sprite.Sprite):
         initid = initid // 3
         numbers = initid % 3
         initid = initid // 3
-        shape = ""
+
         if initid % 3 == 0:
             shape = "oval"
         elif initid % 3 == 1:
@@ -73,7 +74,8 @@ class Card(pygame.sprite.Sprite):
         self.shape = shape
         self.numbers = numbers
         self.fill = fill
-        image = pygame.transform.scale(pygame.image.load("cards/" + str(numbers) + shape[0] + fill[0] + ".bmp"), (config.CARD_W, config.CARD_H))
+        self.imagename = "cards/" + str(numbers) + shape[0] + fill[0] + ".bmp"
+        image = pygame.transform.scale(pygame.image.load(self.imagename), (config.CARD_W, config.CARD_H))
         image.set_colorkey(config.WHITE)
         self.image = pygame.Surface([config.CARD_W, config.CARD_H])
         self.image.fill(color, image.get_rect())
@@ -93,9 +95,6 @@ class Card(pygame.sprite.Sprite):
         elif parametr == "c":
             return self.color
 
-    def checksettable(self, card2, crad3, param):
-        return self.param == card2.param
-
     def checkset(card1, card2, card3, *args):
         dic = {"n": "numbers", "s": "shape", "f": "fill", "c": "color"}
         for i in dic.keys():
@@ -107,3 +106,18 @@ class Card(pygame.sprite.Sprite):
                     print(card1, card2, card3, '', sep="\n")
                 return False
         return True
+
+
+class Button(Card):
+    def __init__(self, buttonname, colorlist, colorid, coords):
+        super().__init__()
+        self.color = colorid
+        self.imagename = "Buttons/" + buttonname + ".bmp"
+        self.image = pygame.Surface([config.BUTTON_W, config.BUTTON_H])
+        self.update(colorlist[colorid], self.color, 0)
+        self.rect = self.image.get_rect()
+        self.rect.center = coords
+
+    def update(self, newcolor, oldcolor, colorlist):
+        if self.color == oldcolor:
+            self.makeimage(newcolor, config.BUTTON_W, config.BUTTON_H)

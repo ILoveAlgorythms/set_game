@@ -31,7 +31,7 @@ class GameApp:
         game_goes = True
         waiting = -1
         buttons = pygame.sprite.Group()
-        f.draw_text(self.sc, (xcenter, 2 * config.NOTCH), self.font, "are you sure want to delete all you scores?")
+        f.draw_text(self.sc, (xcenter, 2 * config.NOTCH), self.font, "are you sure you want to delete all you scores?")
         yes_button = Button("yes", self.colorlist, 0, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
         no_button = Button("no", self.colorlist, 1, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
         buttons.add(yes_button, no_button)
@@ -63,6 +63,10 @@ class GameApp:
             self.clock.tick(config.FPS)
         self.paintitblack()
 
+    def menutext(self):
+        f.draw_text(self.sc, (self.sc.get_rect().centerx, 2 * config.NOTCH), self.font, "press space to exit")
+
+
     def menu(self):
         xcenter = self.sc.get_rect().centerx
         game_goes = True
@@ -73,6 +77,7 @@ class GameApp:
         quick_button = Button("quick", self.colorlist, 0, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, config.NOTCH + 3 * config.BUTTON_H))
         buttons.add(classic_button, reset_button, endless_buton, quick_button)
         buttons.draw(self.sc)
+        self.menutext()
         while game_goes:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -82,12 +87,14 @@ class GameApp:
                     if reset_button.rect.collidepoint(pos):
                         self.paintitblack()
                         self.reset_scores()
+                        self.menutext()
                     else:
                         for i in buttons:
                             if i.rect.collidepoint(pos):
                                 self.paintitblack()
                                 self.game(i.gamemode)
                                 self.paintitblack()
+                                self.menutext()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         game_goes = False

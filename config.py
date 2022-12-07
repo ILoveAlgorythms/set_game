@@ -15,5 +15,5 @@ WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 CARDS_ON_BOARD = 12
 SET_POS = (800, 100)
-GAMEMODENUMBERS = {'classic': 27, 'quick': 8}
+GAMEMODENUMBERS = {'classic': 23, 'quick': 8}
 

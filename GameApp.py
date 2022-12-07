@@ -5,6 +5,7 @@ from config import NOT_A_SET_POSITION as nsp
 import functions as f
 from colorcircle import ColorCircle
 import time
+import json
 
 
 class GameApp:
@@ -22,16 +23,18 @@ class GameApp:
             (122, 0, 255),
         ]
 
-    def menu(self):
+    def paintitblack(self):
+        self.sc.fill(config.BLACK, self.sc.get_rect())
+
+    def reset_scores(self):
         xcenter = self.sc.get_rect().centerx
-        pygame.display.update()
         game_goes = True
+        waiting = -1
         buttons = pygame.sprite.Group()
-        classic_button = Button("classic", self.colorlist, 0, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
-        tutorial_button = Button("tutorial", self.colorlist, 1, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, config.NOTCH + 3 * config.BUTTON_H))
-        endless_buton = Button("endless", self.colorlist, 2, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
-        quick_button = Button("quick", self.colorlist, 0, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, config.NOTCH + 3 * config.BUTTON_H))
-        buttons.add(classic_button, tutorial_button, endless_buton, quick_button)
+        f.draw_text(self.sc, (xcenter, 2 * config.NOTCH), self.font, "are you sure want to delete all you scores?")
+        yes_button = Button("yes", self.colorlist, 0, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
+        no_button = Button("no", self.colorlist, 1, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
+        buttons.add(yes_button, no_button)
         buttons.draw(self.sc)
         while game_goes:
             for event in pygame.event.get():
@@ -39,16 +42,56 @@ class GameApp:
                     game_goes = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
-                    if tutorial_button.rect.collidepoint(pos):
-                        self.tutorial()
-                    for i in buttons:
-                        if i.rect.collidepoint(pos):
-                            self.sc.fill(config.BLACK, self.sc.get_rect())
-                            self.game(i.gamemode)
+                    if no_button.rect.collidepoint(pos):
+                        self.paintitblack()
+                        return
+                    elif yes_button.rect.collidepoint(pos):
+                        for i in ('quick.json', 'classic.json', 'endless.json'):
+                            with open(i, "w") as file:
+                                json.dump(dict(), file)
+                        waiting = config.NOT_A_SET_TICKS
+                        f.draw_text(self.sc, (xcenter, 3 * config.BUTTON_H), self.font, "deleted")
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         game_goes = False
+            if waiting > 0:
+                waiting = waiting - 1
+            elif waiting == 0:
+                game_goes = False
+            buttons.draw(self.sc)
+            pygame.display.flip()
+            self.clock.tick(config.FPS)
+        self.paintitblack()
 
+    def menu(self):
+        xcenter = self.sc.get_rect().centerx
+        game_goes = True
+        buttons = pygame.sprite.Group()
+        classic_button = Button("classic", self.colorlist, 0, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
+        reset_button = Button("reset", self.colorlist, 1, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, config.NOTCH + 3 * config.BUTTON_H))
+        endless_buton = Button("endless", self.colorlist, 2, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
+        quick_button = Button("quick", self.colorlist, 0, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, config.NOTCH + 3 * config.BUTTON_H))
+        buttons.add(classic_button, reset_button, endless_buton, quick_button)
+        buttons.draw(self.sc)
+        while game_goes:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    game_goes = False
+                elif event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if reset_button.rect.collidepoint(pos):
+                        self.paintitblack()
+                        self.reset_scores()
+                    else:
+                        for i in buttons:
+                            if i.rect.collidepoint(pos):
+                                self.paintitblack()
+                                self.game(i.gamemode)
+                                self.paintitblack()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        game_goes = False
+            buttons.draw(self.sc)
             pygame.display.flip()
             self.clock.tick(config.FPS)
 
@@ -93,7 +136,8 @@ class GameApp:
                 f.newcard(cardlist, self.colorlist, newx, newy, unusing_cards)
             cardlist.draw(self.sc)
             clicked.clear()
-            f.cardto12(cardlist, self.colorlist, unusing_cards, self.sc)
+            f.cardtofull(cardlist, self.colorlist, unusing_cards, self.sc, config.CARDS_ON_BOARD)
+            f.makeset(cardlist, self.colorlist, unusing_cards)
             for i in cardlist:
                 i.click(self.colorlist)
                 i.unclick(self.sc)
@@ -105,21 +149,62 @@ class GameApp:
             clicked.clear()
             return False
 
-    def mous_button_handler(self, cardlist, clicked, showset_button):
+    def clickset(self, cardlist, unusing_cards, remove_set_from_deck):  # читкод для отладки
+        clicked = list(f.find_set(cardlist))
+        self.clicked_handler(clicked, cardlist, unusing_cards, -1, not remove_set_from_deck)
+
+    def mouse_button_handler(self, cardlist, clicked, showset_button):
         pos = pygame.mouse.get_pos()
         for i in cardlist.sprites():
-            if (i not in clicked) and i.rect.collidepoint(pos):
-                clicked.append(i)
-                i.click(self.colorlist)
-            else:
-                i.unclick(self.sc)
-                clicked.remove(i)
+            if i.rect.collidepoint(pos):
+                if (i not in clicked):
+                    clicked.append(i)
+                    i.click(self.colorlist)
+                else:
+                    i.unclick(self.sc)
+                    clicked.remove(i)
         if showset_button.rect.collidepoint(pos):
             f.showset(self.sc, cardlist)
 
-    def end_of_game(self, timestart):
-        self.sc.fill(config.BLACK, self.sc.get_rect())
-        f.draw_text(self.sc, (self.sc.get_rect().centerx, 1.5 * config.CARD_H), self.font, "Total time:  " + str(time.ctime(time.time() - timestart))[-10:-5])
+    def end_of_game(self, result, gamemode, wascheating):
+        self.paintitblack()
+        if gamemode in ('quick', 'classic'):
+            score = str(time.ctime(time.time() - result))[-10:-5]
+        elif gamemode in ('', 'endless'):
+            score = str(result)
+        else:
+            score = "looks like its an error!"
+
+        if gamemode in ('quick', 'classic'):
+            message = "Total time:  " + score
+        elif gamemode in ('', 'endless'):
+            message = "Total time:  " + score
+        else:
+            message = "looks like its an error!"
+
+        f.draw_text(self.sc, (self.sc.get_rect().centerx, config.CARD_H), self.font, message)
+        f.draw_text(self.sc, (self.sc.get_rect().centerx, 1.5 * config.CARD_H + config.NOTCH), self.font, "previous scores:")
+
+        with open(gamemode + ".json", "r") as file:
+            previous_scores = json.load(file)
+        if not wascheating:
+            previous_scores[time.ctime(time.time())] = score
+            with open(gamemode + ".json", "w") as file:
+                json.dump(previous_scores, file)
+
+        toscreen = sorted(previous_scores.keys(), key=lambda x: previous_scores[x])[0:5]
+        score_string_pos = 1
+        font = pygame.font.SysFont(size=30, bold=False, italic=False, name='consolas')
+        for i in toscreen:
+            f.draw_text(self.sc, (self.sc.get_rect().centerx, 2 * config.CARD_H + score_string_pos * config.NOTCH), font, str(score_string_pos) + "   " + i[4:10] + ":    " + previous_scores[i])
+            score_string_pos += 1
+        while True:
+            for event in pygame.event.get():
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_SPACE:
+                        return 0
+
+            self.clock.tick(config.FPS)
 
     def game(self, gamemode):
         buttons, cardlist = pygame.sprite.Group(), pygame.sprite.Group()
@@ -128,19 +213,20 @@ class GameApp:
         buttons.add(showset_button)
         number_of_sets = config.GAMEMODENUMBERS.get(gamemode, 27)
         unusing_cards = [i for i in range(81)]  # ids of cards which not used
-        game_goes = True
+        game_goes, sv_cheats = True, 0
         timestart = time.time()
         clicked = []
         waiting, score = -1, 0
         while len(cardlist) < config.CARDS_ON_BOARD:
-            f.cardto12(cardlist, self.colorlist, unusing_cards, self.sc)
+            f.cardtofull(cardlist, self.colorlist, unusing_cards, self.sc, config.CARDS_ON_BOARD)
             f.makeset(cardlist, self.colorlist, unusing_cards)  # check sets
         while game_goes and (score < number_of_sets or gamemode == 'endless'):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
+                    sv_cheats = 1
                     game_goes = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    self.mous_button_handler(cardlist, clicked, showset_button)
+                    self.mouse_button_handler(cardlist, clicked, showset_button)
                     if len(clicked) == 3:
                         if self.clicked_handler(clicked, cardlist, unusing_cards, score, gamemode == 'endless'):
                             score += 1
@@ -148,6 +234,7 @@ class GameApp:
                             waiting = config.NOT_A_SET_TICKS
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
+                        sv_cheats = 1
                         game_goes = False
                     elif event.key in (pygame.K_q, pygame.K_w, pygame.K_e):
                         pos = pygame.mouse.get_pos()
@@ -160,9 +247,10 @@ class GameApp:
                         colorwheel.undraw()
                         f.draw_text(self.sc, config.SET_POS, self.font, 'Your Score: ' + str(score))
             waiting = self.render(buttons, cardlist, colorwheel, waiting)
+            if pygame.key.get_pressed()[pygame.K_LCTRL] and pygame.key.get_pressed()[pygame.K_l]:  # читкод для отладки
+                self.clickset(cardlist, unusing_cards, gamemode != 'endless')
+                number_of_sets += -1
+                sv_cheats = 1
             self.clock.tick(config.FPS)
-        self.end_of_game(timestart)
-
-    def tutorial(self):
-        print('tutorial')
-        cardlist = pygame.sprite.Group()
+        self.end_of_game(score if gamemode == 'endless' else timestart, gamemode, sv_cheats == 1)
+        return 0

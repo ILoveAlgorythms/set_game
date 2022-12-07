@@ -10,9 +10,10 @@ def showset(sc, cardlist):
     set = find_set(cardlist)
     stroke = pygame.transform.scale(pygame.image.load('cards/stroke.bmp'), (config.CARD_W, config.CARD_H))
     stroke.set_colorkey(config.WHITE)
-    for i in set:
-        i.unclick(sc)
-        i.image.blit(stroke, (0, 0))
+    if set:
+        for i in set:
+            i.unclick(sc)
+            i.image.blit(stroke, (0, 0))
 
 
 def draw_text(sc, pos, font, message, **kwargs):  # ПЕРЕДЕЛАТЬ
@@ -35,9 +36,9 @@ def newcard(cardlist, c, x, y, unusing_cards):
     cardlist.add(newcard_)
 
 
-def cardto12(cardlist, c, unusing_cards, sc):
+def cardtofull(cardlist, c, unusing_cards, sc, numberofcards=config.CARDS_ON_BOARD):
     print("hop")
-    while len(cardlist) < config.CARDS_ON_BOARD:
+    while len(cardlist) < numberofcards:
         x = sc.get_rect().centerx + (len(cardlist) % 3 - 2) * config.CARD_W + (len(cardlist) % 3) * config.NOTCH  #
         y = config.NOTCH + (len(cardlist) // 3) * config.CARD_H + (len(cardlist) // 3) * config.NOTCH
         newcard(cardlist, c, x, y, unusing_cards)
@@ -53,6 +54,7 @@ def find_set(cardlist):
                             print("   There is a set: ", i, j, k, sep="\n")
                             return i, j, k
     return False
+
 
 
 def makeset(cardlist, c, unusing_cards):

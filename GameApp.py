@@ -1,9 +1,11 @@
 from card import Card, Button
 import pygame
 import config
+from config import NOT_A_SET_POSITION as nsp
 import functions as f
 from colorcircle import ColorCircle
 import time
+
 
 class GameApp:
     def __init__(self):
@@ -22,16 +24,14 @@ class GameApp:
 
     def menu(self):
         xcenter = self.sc.get_rect().centerx
-        text = self.font.render('нажмите 3 чтобы начать', True, (255, 255, 255), (0, 0, 0))
-        text_pos = text.get_rect(center=(xcenter, config.CARD_H))
-        self.sc.blit(text, text_pos)
         pygame.display.update()
         game_goes = True
         buttons = pygame.sprite.Group()
-        classic_button = Button("classic", self.colorlist, 0, (xcenter, 2 * config.BUTTON_H))
-        tutorial_button = Button("tutorial", self.colorlist, 1, (xcenter, config.NOTCH + 3 * config.BUTTON_H))
-        endless_buton = Button("endless", self.colorlist, 2, (xcenter, 2 * config.NOTCH + 4 * config.BUTTON_H))
-        buttons.add(classic_button, tutorial_button, endless_buton)
+        classic_button = Button("classic", self.colorlist, 0, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
+        tutorial_button = Button("tutorial", self.colorlist, 1, (xcenter - (config.BUTTON_W + config.NOTCH) / 2, config.NOTCH + 3 * config.BUTTON_H))
+        endless_buton = Button("endless", self.colorlist, 2, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, 2 * config.BUTTON_H))
+        quick_button = Button("quick", self.colorlist, 0, (xcenter + (config.BUTTON_W + config.NOTCH) / 2, config.NOTCH + 3 * config.BUTTON_H))
+        buttons.add(classic_button, tutorial_button, endless_buton, quick_button)
         buttons.draw(self.sc)
         while game_goes:
             for event in pygame.event.get():
@@ -39,113 +39,130 @@ class GameApp:
                     game_goes = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     pos = pygame.mouse.get_pos()
-                    if classic_button.rect.collidepoint(pos):
-                        self.sc.fill(config.BLACK, self.sc.get_rect())
-                        self.classic(1)
+                    if tutorial_button.rect.collidepoint(pos):
+                        self.tutorial()
+                    for i in buttons:
+                        if i.rect.collidepoint(pos):
+                            self.sc.fill(config.BLACK, self.sc.get_rect())
+                            self.game(i.gamemode)
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_3:
-                        self.sc.fill(config.BLACK, self.sc.get_rect())
-                        self.classic(1)
-                    elif event.key == pygame.K_SPACE:
+                    if event.key == pygame.K_SPACE:
                         game_goes = False
 
             pygame.display.flip()
             self.clock.tick(config.FPS)
 
-    def classic(self, number_of_sets):
-        timestart = time.time()
-        unusing_cards = list()  # ids of cards which not used
-        for i in range(81):
-            unusing_cards.append(i)
-        cardlist = pygame.sprite.Group()
+    def render(self, buttons, cardlist, colorwheel, waiting):
+        buttons.draw(self.sc)
+        cardlist.draw(self.sc)
+        colorwheel.draw() if colorwheel.onscreen else 0
+        pygame.display.flip()
+        if waiting > 0:
+            return (waiting - 1)
+        elif waiting == 0:
+            self.sc.fill(config.BLACK, (nsp[0] - 100, nsp[1] - 100, nsp[0] + 100, nsp[1] + 100))
+            return -1
+        else:
+            return waiting
+
+    def color_change_handler(self, pos, key, cardlist):
+        newcolor = self.sc.get_at(pos)
+        if not (newcolor in self.colorlist or newcolor == config.BLACK):
+            if key == pygame.K_q:
+                self.colorlist[0] = self.sc.get_at(pos)
+                cardlist.update(self.colorlist[0], 0, self.colorlist)
+            elif key == pygame.K_w:
+                self.colorlist[1] = self.sc.get_at(pos)
+                cardlist.update(self.colorlist[1], 1, self.colorlist)
+            elif key == pygame.K_e:
+                self.colorlist[2] = self.sc.get_at(pos)
+                cardlist.update(self.colorlist[2], 2, self.colorlist)
+
+    def clicked_handler(self, clicked, cardlist, unusing_cards, score, endless):
+        if Card.checkset(clicked[0], clicked[1], clicked[2], 0):
+            print("\n   set! score:", score)
+            f.draw_text(self.sc, config.SET_POS, self.font, 'Your Score: ' + str(score + 1))
+            for i in clicked:
+                unusing_cards.append(i.id) if endless else 0
+                cardlist.remove(i)
+                i.kill()
+            for a in clicked:
+                newx = a.rect.x
+                newy = a.rect.y
+                a.kill()
+                f.newcard(cardlist, self.colorlist, newx, newy, unusing_cards)
+            cardlist.draw(self.sc)
+            clicked.clear()
+            f.cardto12(cardlist, self.colorlist, unusing_cards, self.sc)
+            for i in cardlist:
+                i.click(self.colorlist)
+                i.unclick(self.sc)
+            return True
+        else:
+            for i in clicked:
+                i.unclick(self.sc)
+            f.draw_text(self.sc, nsp, self.font, 'NOT A SET!', color=(self.colorlist[0]))
+            clicked.clear()
+            return False
+
+    def mous_button_handler(self, cardlist, clicked, showset_button):
+        pos = pygame.mouse.get_pos()
+        for i in cardlist.sprites():
+            if (i not in clicked) and i.rect.collidepoint(pos):
+                clicked.append(i)
+                i.click(self.colorlist)
+            else:
+                i.unclick(self.sc)
+                clicked.remove(i)
+        if showset_button.rect.collidepoint(pos):
+            f.showset(self.sc, cardlist)
+
+    def end_of_game(self, timestart):
+        self.sc.fill(config.BLACK, self.sc.get_rect())
+        f.draw_text(self.sc, (self.sc.get_rect().centerx, 1.5 * config.CARD_H), self.font, "Total time:  " + str(time.ctime(time.time() - timestart))[-10:-5])
+
+    def game(self, gamemode):
+        buttons, cardlist = pygame.sprite.Group(), pygame.sprite.Group()
+        showset_button = Button('showset', self.colorlist, 0, (config.NOTCH + config.BUTTON_W / 2, 2.6 * config.NOTCH + config.BUTTON_H / 2))
+        colorwheel = ColorCircle(self.sc)
+        buttons.add(showset_button)
+        number_of_sets = config.GAMEMODENUMBERS.get(gamemode, 27)
+        unusing_cards = [i for i in range(81)]  # ids of cards which not used
         game_goes = True
-
-        clicked = list()
-        waiting = -1
-        # constants declaration
-        sc = self.sc
-        clock = self.clock
-        score = 0
-
-        font = self.font
-        f.draw_text(sc, config.SET_POS, font, 'Your Score: ' + str(score))
-
-        colorwheel = ColorCircle(sc)
-        nsp = (sc.get_width() - 4 * config.CARD_W, sc.get_height() - config.CARD_H / 2)  # not a set pos
-        while game_goes and score < number_of_sets:  # 27 -- максимальное количество сетов
-            if len(cardlist) < config.CARDS_ON_BOARD:
-                f.cardto12(cardlist, self.colorlist, unusing_cards)
-                f.makeset(cardlist, self.colorlist, unusing_cards)  # check sets
-
+        timestart = time.time()
+        clicked = []
+        waiting, score = -1, 0
+        while len(cardlist) < config.CARDS_ON_BOARD:
+            f.cardto12(cardlist, self.colorlist, unusing_cards, self.sc)
+            f.makeset(cardlist, self.colorlist, unusing_cards)  # check sets
+        while game_goes and (score < number_of_sets or gamemode == 'endless'):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     game_goes = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    pos = pygame.mouse.get_pos()
-                    for i in cardlist.sprites():
-                        if i.rect.collidepoint(pos):
-                            if i not in clicked:
-                                clicked.append(i)
-                                i.click(self.colorlist)
-                            else:
-                                i.unclick(sc)
-                                clicked.remove(i)
+                    self.mous_button_handler(cardlist, clicked, showset_button)
                     if len(clicked) == 3:
-                        if Card.checkset(clicked[0], clicked[1], clicked[2], 0):
-                            score = score + 1
-                            print("\n   set! score:", score)
-                            f.draw_text(sc, config.SET_POS, font, 'Your Score: ' + str(score))
-                            for i in clicked:
-                                cardlist.remove(i)
-                                i.kill()
-                            for a in clicked:
-                                newx = a.rect.x
-                                newy = a.rect.y
-                                a.kill()
-                                f.newcard(cardlist, self.colorlist, newx, newy, unusing_cards)
-                            cardlist.draw(sc)
-                            clicked.clear()
-                            f.cardto12(cardlist, self.colorlist, unusing_cards)
-                            for i in cardlist:
-                                i.click(self.colorlist)
-                                i.unclick(sc)
+                        if self.clicked_handler(clicked, cardlist, unusing_cards, score, gamemode == 'endless'):
+                            score += 1
                         else:
-                            for i in clicked:
-                                i.unclick(sc)
                             waiting = config.NOT_A_SET_TICKS
-                            f.notaset(sc, nsp, font)
-                            clicked.clear()
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         game_goes = False
                     elif event.key in (pygame.K_q, pygame.K_w, pygame.K_e):
-                        if not colorwheel.rect.collidepoint(pygame.mouse.get_pos()):
-                            if event.key == pygame.K_q:
-                                self.colorlist[0] = sc.get_at(pygame.mouse.get_pos())
-                                cardlist.update(self.colorlist[0], 0, self.colorlist)
-                            elif event.key == pygame.K_w:
-                                self.colorlist[1] = sc.get_at(pygame.mouse.get_pos())
-                                cardlist.update(self.colorlist[1], 1, self.colorlist)
-                            elif event.key == pygame.K_e:
-                                self.colorlist[2] = sc.get_at(pygame.mouse.get_pos())
-                                cardlist.update(self.colorlist[2], 2, self.colorlist)
-                            cardlist.draw(sc)
+                        pos = pygame.mouse.get_pos()
+                        if not colorwheel.rect.collidepoint(pos):
+                            self.color_change_handler(pos, event.key, cardlist)
                     elif event.key == pygame.K_TAB:
-                        colorwheel.draw()
+                        colorwheel.onscreen = True
                 elif event.type == pygame.KEYUP:
                     if event.key == pygame.K_TAB:
                         colorwheel.undraw()
-
-            if waiting > 0 and waiting != -1:
-                waiting = waiting - 1
-            else:
-                waiting = -1
-                sc.fill((0, 0, 0), (nsp[0], nsp[1], nsp[0] + 50, nsp[1] + 50))
-            cardlist.draw(sc)
-            pygame.display.flip()
-            clock.tick(config.FPS)
-        self.sc.fill(config.BLACK, sc.get_rect())
-        f.draw_text(sc, (self.sc.get_rect().centerx, 1.5 * config.CARD_H), font, "Total time:  " + str(time.ctime(time.time() - timestart))[-10:-5])
+                        f.draw_text(self.sc, config.SET_POS, self.font, 'Your Score: ' + str(score))
+            waiting = self.render(buttons, cardlist, colorwheel, waiting)
+            self.clock.tick(config.FPS)
+        self.end_of_game(timestart)
 
     def tutorial(self):
-        print("notfinished yet")
+        print('tutorial')
+        cardlist = pygame.sprite.Group()

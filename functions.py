@@ -1,3 +1,5 @@
+import pygame
+
 from card import Card
 import config
 import random
@@ -5,18 +7,23 @@ from pygame import display
 
 
 def showset(sc, cardlist):
-    print(1)
+    set = find_set(cardlist)
+    stroke = pygame.transform.scale(pygame.image.load('cards/stroke.bmp'), (config.CARD_W, config.CARD_H))
+    stroke.set_colorkey(config.WHITE)
+    for i in set:
+        i.unclick(sc)
+        i.image.blit(stroke, (0, 0))
 
 
-def draw_text(sc, pos, font, message):  # ПЕРЕДЕЛАТЬ
-    text = font.render(message, True, (255, 255, 255), (0, 0, 0))
+def draw_text(sc, pos, font, message, **kwargs):  # ПЕРЕДЕЛАТЬ
+    text = font.render(message, True, kwargs.get('color', config.WHITE), (0, 0, 0))
     text_pos = text.get_rect(center=pos)
     sc.blit(text, text_pos)
     display.update()
 
 
 def notaset(sc, pos, font):
-    text = font.render('This is not a set!', True, (255, 255, 255), (0, 0, 0))
+    text = font.render('This is not a set!', True, (25, 255, 25), (0, 0, 0))
     sc.blit(text, pos)
     display.update()
 
@@ -28,12 +35,12 @@ def newcard(cardlist, c, x, y, unusing_cards):
     cardlist.add(newcard_)
 
 
-def cardto12(cardlist, c, unusing_cards):
-    a_ = list()
+def cardto12(cardlist, c, unusing_cards, sc):
+    print("hop")
     while len(cardlist) < config.CARDS_ON_BOARD:
-        x = config.NOTCH + (len(cardlist) % 3) * config.CARD_W + (len(cardlist) % 3) * config.NOTCH  #
+        x = sc.get_rect().centerx + (len(cardlist) % 3 - 2) * config.CARD_W + (len(cardlist) % 3) * config.NOTCH  #
         y = config.NOTCH + (len(cardlist) // 3) * config.CARD_H + (len(cardlist) // 3) * config.NOTCH
-        a_.append(newcard(cardlist, c, x, y, unusing_cards))
+        newcard(cardlist, c, x, y, unusing_cards)
 
 
 def find_set(cardlist):

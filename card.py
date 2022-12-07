@@ -43,7 +43,7 @@ class Card(pygame.sprite.Sprite):
 
     def makeimage(self, newcolor, width, height):
         image = pygame.transform.scale(pygame.image.load(self.imagename), (width, height))
-        image.set_colorkey((255, 255, 255))
+        image.set_colorkey(config.WHITE)
         self.image = pygame.Surface([self.image.get_width(), self.image.get_height()])
         self.image.fill(newcolor, image.get_rect())
         self.image.blit(image, (0, 0))
@@ -105,8 +105,7 @@ class Card(pygame.sprite.Sprite):
                     print("\n   not a set because of :", dic[i])
                     print(card1, card2, card3, '', sep="\n")
                 return False
-        return True
-
+        return card1, card2, card3
 
 class Button(Card):
     def __init__(self, buttonname, colorlist, colorid, coords):
@@ -117,6 +116,7 @@ class Button(Card):
         self.update(colorlist[colorid], self.color, 0)
         self.rect = self.image.get_rect()
         self.rect.center = coords
+        self.gamemode = buttonname
 
     def update(self, newcolor, oldcolor, colorlist):
         if self.color == oldcolor:

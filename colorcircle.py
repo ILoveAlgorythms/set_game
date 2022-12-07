@@ -22,4 +22,5 @@ class ColorCircle(pygame.sprite.Sprite):
 
 
     def undraw(self):
+        self.onscreen = False
         self.sc.fill(config.BLACK, (0, 0, config.W + config.CARD_W * 4 + config.NOTCH, config.H))

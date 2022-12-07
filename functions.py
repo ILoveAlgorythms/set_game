@@ -56,7 +56,6 @@ def find_set(cardlist):
     return False
 
 
-
 def makeset(cardlist, c, unusing_cards):
     set_on_table = find_set(cardlist)
     while not set_on_table:

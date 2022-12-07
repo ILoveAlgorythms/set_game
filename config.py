@@ -16,4 +16,4 @@ BLACK = (0, 0, 0)
 CARDS_ON_BOARD = 12
 SET_POS = (800, 100)
 GAMEMODENUMBERS = {'classic': 23, 'quick': 8}
-
+CARDS_QUANTITY = 81

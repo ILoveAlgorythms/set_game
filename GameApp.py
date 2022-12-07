@@ -66,7 +66,6 @@ class GameApp:
     def menutext(self):
         f.draw_text(self.sc, (self.sc.get_rect().centerx, 2 * config.NOTCH), self.font, "press space to exit")
 
-
     def menu(self):
         xcenter = self.sc.get_rect().centerx
         game_goes = True
@@ -219,7 +218,7 @@ class GameApp:
         colorwheel = ColorCircle(self.sc)
         buttons.add(showset_button)
         number_of_sets = config.GAMEMODENUMBERS.get(gamemode, 27)
-        unusing_cards = [i for i in range(81)]  # ids of cards which not used
+        unusing_cards = [i for i in range(config.CARDS_QUANTITY)]  # ids of cards which not used
         game_goes, sv_cheats = True, 0
         timestart = time.time()
         clicked = []

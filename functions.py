@@ -8,9 +8,10 @@ def showset(sc, cardlist):
     print(1)
 
 
-def draw_text(sc, pos, font, score):
-    text = font.render('Your Score: ' + str(score), True, (255, 255, 255), (0, 0, 0))
-    sc.blit(text, pos)
+def draw_text(sc, pos, font, message):  # ПЕРЕДЕЛАТЬ
+    text = font.render(message, True, (255, 255, 255), (0, 0, 0))
+    text_pos = text.get_rect(center=pos)
+    sc.blit(text, text_pos)
     display.update()
 
 
@@ -27,11 +28,10 @@ def newcard(cardlist, c, x, y, unusing_cards):
     cardlist.add(newcard_)
 
 
-
 def cardto12(cardlist, c, unusing_cards):
     a_ = list()
     while len(cardlist) < config.CARDS_ON_BOARD:
-        x = config.NOTCH + (len(cardlist) % 3) * config.CARD_W + (len(cardlist) % 3) * config.NOTCH#
+        x = config.NOTCH + (len(cardlist) % 3) * config.CARD_W + (len(cardlist) % 3) * config.NOTCH  #
         y = config.NOTCH + (len(cardlist) // 3) * config.CARD_H + (len(cardlist) // 3) * config.NOTCH
         a_.append(newcard(cardlist, c, x, y, unusing_cards))
 
@@ -60,4 +60,3 @@ def makeset(cardlist, c, unusing_cards):
             newcard(cardlist, c, newx, newy, unusing_cards)
 
         set_on_table = find_set(cardlist)
-
